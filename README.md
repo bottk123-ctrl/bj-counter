@@ -1,155 +1,167 @@
 # Blackjack AI
 
-Тренажёр подсчёта карт и симулятор бота-игрока для блэкджека на Python.
-Есть графический интерфейс (Tkinter) и консольный режим.
+A blackjack card-counting trainer and bot simulator written in Python.
+It ships with a graphical interface (Tkinter) and a console mode.
 
-## Возможности
+## Features
 
-- **Несколько систем подсчёта:** Hi-Lo, KO, Hi-Opt I, Hi-Opt II, Zen, Omega II,
+- **Multiple counting systems:** Hi-Lo, KO, Hi-Opt I, Hi-Opt II, Zen, Omega II,
   Wong Halves, Red Seven.
-- **Графический интерфейс (GUI):** вкладки «Счёт», «Игра», «Симулятор», «Настройки».
-- **Подсчёт по реальной раздаче:** отмечайте карты по мере их выхода (клик по сетке
-  52 карты или хоткеи) — счёт и рекомендуемая ставка обновляются в реальном времени.
-- **Тренажёр счёта и игры** (консоль): проверка running/true count и решений.
-- **Симулятор:** бот играет N рук по базовой стратегии с индексными отклонениями
-  (Illustrious 18). Режимы ставок: **флэт**, **спред по счёту** и **дробный Kelly**
-  (ставка пропорциональна банку). Считает EV, преимущество, просадку, минимальный
-  банкролл и **риск разорения**; при многих сессиях — **95% доверительный интервал**.
-- **Вкладка «Статистика»:** накопленная точность решений и счёта, история симуляций
-  и график кривой банкролла.
-- **Сохранение состояния:** статистика и текущая живая сессия сохраняются в JSON и
-  восстанавливаются при следующем запуске.
-- **Удобство в игре:** горячие клавиши (H/S/D/P/R, N) и звуковой/цветовой отклик.
-- Ядро — только стандартная библиотека. `pytest` нужен для тестов.
+- **Graphical interface (GUI):** tabs for Count, Play, Simulator, Stats, Settings.
+- **Live counting:** mark cards as they appear (click a 52-card grid or use
+  hotkeys) — the running count and recommended bet update in real time.
+- **Counting and play drills** (console): check your running/true count and
+  basic-strategy decisions.
+- **Simulator:** the bot plays N hands with basic strategy and index deviations
+  (Illustrious 18). Betting modes: **flat**, **count spread**, and **fractional
+  Kelly** (bet proportional to the bankroll). It reports EV, edge, drawdown,
+  minimum bankroll, and **risk of ruin**; across many sessions it also reports a
+  **95% confidence interval**.
+- **Stats tab:** accumulated decision/count accuracy, simulation history, and a
+  bankroll-curve chart.
+- **State persistence:** training stats and the current live session are saved to
+  JSON and restored on the next launch.
+- **Play convenience:** hotkeys (H/S/D/P/R, N) plus sound and color feedback.
+- The core uses only the standard library. `pytest` is needed for the tests.
 
-## Запуск
+## Running
 
-Графический интерфейс:
+Graphical interface:
 
 ```bash
 python -m gui
 ```
 
-или
+or
 
 ```bash
-python cli.py       # пункт 8 в меню
+python cli.py       # menu option 8
 ```
 
-Консольное меню:
+Console menu:
 
 ```bash
 python cli.py
 ```
 
-Пункт 7 — подсчёт по реальной раздаче прямо в консоли (вводите карты как `10h`, `as`, `k♦`).
+Option 7 is live counting straight in the console (enter cards like `10h`, `as`,
+`k♦`).
 
-## Подсчёт по реальной раздаче (GUI)
+## Live counting (GUI)
 
-Вкладка **«Счёт (реальная раздача)»**:
+The **Count (live deal)** tab:
 
-- Слева выберите систему подсчёта и число колод.
-- Отмечайте карты, которые выходят на столе, кнопками сетки (строка — масть,
-  столбец — ранг) или хоткеями: `2-9`, `0`/`t`, `j`, `q`, `k`, `a` — карта,
-  а `s`/`h`/`d`/`c` — текущая масть.
-- Панель показывает **running count**, **true count**, сколько колод осталось и
-  рекомендуемую ставку в юнитах.
-- Кнопки: «Отменить» (убрать последнюю карту), «Новый шуз», «Сброс».
-- Галочка «Показывать счёт» во вкладке «Игра» скрывает счёт, чтобы не подсказывать
-  во время тренировки.
+- Pick a counting system and the number of decks.
+- Mark the cards that appear using the grid buttons (row = suit, column = rank) or
+  hotkeys: `2-9`, `0`/`t`, `j`, `q`, `k`, `a` for a card, and `s`/`h`/`d`/`c` to
+  select the current suit.
+- The panel shows the **running count**, **true count**, decks remaining, and the
+  recommended bet in units.
+- Buttons: Undo (remove the last card), New shoe, Reset.
+- The "Show count" checkbox on the Play tab hides the count so it does not give
+  hints during practice.
 
-## Симулятор: руина, Kelly и доверительные интервалы
+## Simulator: ruin, Kelly, and confidence intervals
 
-Вкладка **«Симулятор»**:
+The **Simulator** tab:
 
-- **Режим ставок:**
-  - *флэт* — всегда 1 юнит (контрольный режим);
-  - *спред по счёту* — ставка растёт по true count (юниты × unit);
-  - *Kelly* — ставка пропорциональна банку и преимуществу (дробный Kelly; «Доля Kelly»
-    0.5 = half Kelly). Тогда банкролл растёт экспоненциально, и «иксы» осмысленны.
-- **Лимит стола** — максимальная ставка (0 = без лимита).
-- **Останавливать на руине** — если банкролл не покрывает нужную ставку, сессия
-  завершается, а в отчёте помечается руина и **минимальный банкролл** по пути.
-- **Сессий > 1** — запускается несколько независимых сессий с разными seed'ами;
-  отчёт показывает среднее преимущество с **95% доверительным интервалом**,
-  распределение финального банкролла (перцентили) и **эмпирический риск разорения**.
+- **Betting mode:**
+  - *flat* — always 1 unit (control mode);
+  - *count spread* — the bet grows with the true count (units × unit);
+  - *Kelly* — the bet is proportional to the bankroll and edge (fractional Kelly;
+    a "Kelly fraction" of 0.5 is half Kelly). The bankroll then grows
+    exponentially, so multipliers become meaningful.
+- **Table limit** — the maximum bet (0 = no limit).
+- **Stop on ruin** — if the bankroll cannot cover the required bet, the session
+  ends, and the report flags ruin and the **minimum bankroll** along the way.
+- **Sessions > 1** — several independent sessions run with different seeds; the
+  report shows the mean edge with a **95% confidence interval**, the distribution
+  of the final bankroll (percentiles), and the **empirical risk of ruin**.
 
-Риск разорения также оценивается аналитически по формуле
-`RoR ≈ exp(-2·EV·B/σ²)` (EV и σ — на руку в юнитах, B — банкролл в юнитах).
+Risk of ruin is also estimated analytically with
+`RoR ≈ exp(-2·EV·B/σ²)` (EV and σ are per hand in units, B is the bankroll in
+units).
 
-## Статистика и сохранение
+## Stats and persistence
 
-Вкладка **«Статистика»** показывает:
+The **Stats** tab shows:
 
-- точность решений по базовой стратегии и проверок счёта;
-- число сыгранных рук и рук в симуляциях;
-- историю последних симуляций (система, итог, преимущество, EV, просадка);
-- **график кривой банкролла** последней симуляции.
+- basic-strategy decision and count-check accuracy;
+- the number of hands played and hands simulated;
+- the history of recent simulations (system, result, edge, EV, drawdown);
+- a **bankroll-curve chart** for the last simulation.
 
-Данные хранятся в `%APPDATA%\blackjack_ai\state.json` (или `~/blackjack_ai/state.json`):
+Data is stored in `%APPDATA%\blackjack_ai\state.json` (or
+`~/blackjack_ai/state.json`):
 
-- **живая сессия** (система, колоды и введённые карты) сохраняется автоматически и
-  восстанавливается при следующем запуске — счёт не потеряется при закрытии;
-- статистика тренировок и история симуляций накапливаются между запусками;
-- кнопки на вкладке статистики позволяют очистить данные.
+- the **live session** (system, decks, and entered cards) is saved automatically
+  and restored on the next launch — your count is not lost when you close the app;
+- training stats and simulation history accumulate across launches;
+- buttons on the stats tab let you clear the data.
 
-В консольном меню пункт **9) Статистика** показывает те же накопленные показатели.
+Console menu option **9) Stats** shows the same accumulated figures.
 
-## Горячие клавиши
+## Hotkeys
 
-Вкладка **«Игра»**: `H` — добор, `S` — стоп, `D` — дабл, `P` — сплит, `R` — сдаться,
-`N` — новая раздача. Галочка «Звук» включает короткий сигнал (верно/неверно),
-цвет подсказки меняется на зелёный/фиолетовый.
+**Play** tab: `H` — hit, `S` — stand, `D` — double, `P` — split, `R` — surrender,
+`N` — new round. The "Sound" checkbox toggles a short beep (correct/incorrect),
+and the hint color switches between green and purple.
 
-Вкладка **«Счёт»**: `2-9`, `0`/`t`, `j`, `q`, `k`, `a` — добавить карту,
-`s`/`h`/`d`/`c` — выбрать текущую масть.
+**Count** tab: `2-9`, `0`/`t`, `j`, `q`, `k`, `a` — add a card,
+`s`/`h`/`d`/`c` — select the current suit.
 
-## Структура
+## Structure
 
 ```
 blackjack/
-  cards.py            карты, колода, шуз, подсчёт суммы руки
-  rules.py            правила стола (колоды, S17/H17, DAS, выплата BJ, ...)
-  engine.py           движок раунда: раздача, hit/stand/double/split/insurance, выплаты
-  strategy.py         базовая стратегия + индексные отклонения
+  cards.py            cards, deck, shoe, hand total
+  rules.py            table rules (decks, S17/H17, DAS, blackjack payout, ...)
+  engine.py           round engine: deal, hit/stand/double/split/insurance, payouts
+  strategy.py         basic strategy + index deviations
   counting/
-    systems.py        описания систем подсчёта
-    counter.py        running count, true count, решение о ставке
+    systems.py        counting-system definitions
+    counter.py        running count, true count, bet sizing
 modes/
-  trainer.py          консольный тренажёр счёта и игры
-  live.py             живой подсчёт по реальной раздаче (общая логика + консоль)
-  simulator.py        симулятор бота и статистика
+  trainer.py          console counting and play drills
+  live.py             live counting from a real deal (shared logic + console)
+  simulator.py        bot simulator and statistics
 gui/
-  app.py              главное окно и вкладка настроек
-  live.py             вкладка живого подсчёта
-  play.py             вкладка игры против дилера
-  sim.py              вкладка симулятора (руина, Kelly, доверительные интервалы)
-  stats.py            вкладка статистики и график банкролла
-  widgets.py          отрисовка карт
-storage.py            сохранение статистики и живой сессии в JSON
-cli.py                консольное меню
-tests/                тесты pytest
+  app.py              main window and settings tab
+  live.py             live-counting tab
+  play.py             play-vs-dealer tab
+  sim.py              simulator tab (ruin, Kelly, confidence intervals)
+  stats.py            stats tab and bankroll chart
+  widgets.py          card rendering
+storage.py            JSON persistence of stats and the live session
+cli.py                console menu
+tests/                pytest tests
 ```
 
-## Идея подсчёта
+## How counting works
 
-Для **balanced**-систем сумма тегов полной колоды равна нулю, поэтому:
+For **balanced** systems the tags of a full deck sum to zero, so:
 
 ```
-true count = running count / колод осталось
+true count = running count / decks remaining
 ```
 
-Чем выше true count, тем больше «десяток» и тузов осталось — тем выгоднее играть.
-Ставка растёт (bet spread) по мере роста true count. Для **unbalanced**-систем
-(KO, Red Seven) используют running count с поправкой на начальный отсчёт (IRC).
+The higher the true count, the more tens and aces remain — the better the game
+becomes. The bet grows (bet spread) as the true count rises. For **unbalanced**
+systems (KO, Red Seven) the running count is used with an initial running count
+(IRC) offset.
 
-## Тесты
+## Tests
 
 ```bash
 python -m pytest
 ```
 
-## Примечание
+## License
 
-Подсчёт карт не запрещён законом, но казино вправе отказать в игре. Проект
-предназначен для обучения и симуляции, а не для скрытой помощи в реальном столе.
+Released under the [MIT License](LICENSE).
+
+## Note
+
+Card counting is not illegal, but casinos may refuse to let you play. This project
+is intended for learning and simulation, not for covert assistance at a real
+table.
