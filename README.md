@@ -165,3 +165,13 @@ Released under the [MIT License](LICENSE).
 Card counting is not illegal, but casinos may refuse to let you play. This project
 is intended for learning and simulation, not for covert assistance at a real
 table.
+
+---
+
+## 📫 Contact
+
+Open to freelance work and collaborations.
+
+- Email: **bottiktik123@gmail.com**
+- GitHub: [@bottk123-ctrl](https://github.com/bottk123-ctrl)
+- Portfolio: [github.com/bottk123-ctrl/portfolio](https://github.com/bottk123-ctrl/portfolio)
