@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Тесты / кэш
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Виртуальные окружения
+.venv/
+venv/
+env/
+
+# Сборка
+build/
+dist/
+*.egg-info/
+
+# IDE / ОС
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+desktop.ini
+
+# Локальное состояние приложения
+*.log
+state.json
