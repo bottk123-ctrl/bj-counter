@@ -26,6 +26,12 @@ It ships with a graphical interface (Tkinter) and a console mode.
 
 ## Running
 
+Install the dependencies first (only `pytest` is needed, for the tests):
+
+```bash
+pip install -r requirements.txt
+```
+
 Graphical interface:
 
 ```bash
