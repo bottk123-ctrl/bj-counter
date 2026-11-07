@@ -23,6 +23,7 @@ def use_ascii_suits() -> None:
     global SUIT_SYMBOLS
     SUIT_SYMBOLS = list(ASCII_SUITS)
 
+
 RANK_VALUE = {
     "2": 2,
     "3": 3,
@@ -110,7 +111,12 @@ def cards_to_str(cards) -> str:
 class Shoe:
     """Мультиколодный шуз с точкой проникновения (penetration)."""
 
-    def __init__(self, num_decks: int = 6, penetration: float = 0.75, rng: random.Random | None = None):
+    def __init__(
+        self,
+        num_decks: int = 6,
+        penetration: float = 0.75,
+        rng: random.Random | None = None,
+    ) -> None:
         if num_decks < 1:
             raise ValueError("Колод должно быть хотя бы 1")
         if not 0.0 < penetration <= 1.0:
