@@ -98,14 +98,8 @@ def basic_strategy(cards, dealer_rank: str, rules, available=None) -> str:
     idx = DEALER_UPCARDS.index(up)
     total, soft = hand_total(cards)
 
-    # Сюррендер (поздний) проверяем самым первым.
-    if ACTION_SURRENDER in available and rules.surrender and len(cards) == 2:
-        if total == 16 and up in (9, 10, 11):
-            return ACTION_SURRENDER
-        if total == 15 and up == 10:
-            return ACTION_SURRENDER
-
-    # Пары.
+    # Пары проверяем раньше сюррендера: 8,8 против 10/A нужно сплитить,
+    # а не сдаваться (сюррендер применим только к неразделяемым 15/16).
     if is_pair(cards) and ACTION_SPLIT in available:
         table = PAIRS.get(pair_rank(cards))
         if table is not None:
@@ -114,6 +108,13 @@ def basic_strategy(cards, dealer_rank: str, rules, available=None) -> str:
                 return ACTION_SPLIT
             if code in ("H", "S"):
                 return _resolve(code, available, ACTION_HIT)
+
+    # Сюррендер (поздний) — после проверки пар.
+    if ACTION_SURRENDER in available and rules.surrender and len(cards) == 2:
+        if total == 16 and up in (9, 10, 11):
+            return ACTION_SURRENDER
+        if total == 15 and up == 10:
+            return ACTION_SURRENDER
 
     # Мягкие руки.
     if soft:
@@ -145,6 +146,13 @@ def deviation_action(cards, dealer_rank: str, true_count, available, rules) -> s
 
     def ok(action: str) -> bool:
         return action in available
+
+    # Не перебиваем сплит, который верен по базовой стратегии (6,6 и 8,8):
+    # счёт не должен превращать их в «стоп» или «добор», пока сплит доступен.
+    if is_pair(cards) and ok(ACTION_SPLIT):
+        pair_table = PAIRS.get(pair_rank(cards))
+        if pair_table is not None and pair_table[DEALER_UPCARDS.index(up)] == "P":
+            return None
 
     # Сплит десяток против 5/6 при очень высоком счёте.
     if is_pair(cards) and pair_rank(cards) in ("10", "J", "Q", "K"):
