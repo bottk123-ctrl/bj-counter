@@ -124,17 +124,29 @@ class TrainerSession:
         print("\n--- Игра против дилера ---")
         print("Действия: h=hit  s=stand  d=double  p=split  r=surrender  q=выход")
         print("После руки спрашиваю счёт, чтобы тренировать и стратегию, и подсчёт.\n")
+        last_gen = self.game.shoe.generation
+
+        def sync_shoe() -> None:
+            nonlocal last_gen
+            gen = self.game.shoe.generation
+            if gen != last_gen:
+                # Шуз перетасован, в том числе аварийно посреди раунда.
+                last_gen = gen
+                self.counter.reset()
+                self.game.shoe_number += 1
+
         try:
             while True:
                 if self.game.shoe.needs_shuffle():
                     self.game.shoe.shuffle()
-                    self.counter.reset()
+                    sync_shoe()
                     print(">> Новый шуз, счёт сброшен.\n")
 
                 rnd = self.game.start_round(base_bet)
                 seen: set[int] = set()
 
                 def see(card) -> None:
+                    sync_shoe()
                     if id(card) not in seen:
                         seen.add(id(card))
                         self.counter.observe(card)

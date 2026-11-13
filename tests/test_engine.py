@@ -1,6 +1,7 @@
 from blackjack.cards import Card
 from blackjack.engine import BlackjackGame, Round
 from blackjack.rules import Rules
+from blackjack.strategy import basic_strategy
 
 
 class FakeShoe:
@@ -119,3 +120,40 @@ def test_game_start_round_and_reshuffle():
     assert len(rnd.player[0].cards) == 2
     assert len(rnd.dealer) == 2
     assert game.rounds_played == 1
+
+
+def test_insurance_requires_ace_upcard():
+    import pytest
+
+    shoe = FakeShoe([_c("10"), _c("6"), _c("9"), _c("7")])
+    rnd = Round(Rules(), shoe, bet=10)
+    with pytest.raises(ValueError):
+        rnd.take_insurance(5.0)
+
+
+def test_insurance_requires_positive_amount():
+    import pytest
+
+    shoe = FakeShoe([_c("A"), _c("K"), _c("9"), _c("7")])
+    rnd = Round(Rules(), shoe, bet=10)
+    with pytest.raises(ValueError):
+        rnd.take_insurance(0)
+
+
+def test_full_penetration_never_exhausts_shoe():
+    """При penetration=1.0 раунд не должен падать с IndexError."""
+    game = BlackjackGame(Rules(num_decks=1, penetration=1.0), seed=7)
+    for _ in range(2000):
+        if game.shoe.needs_shuffle():
+            game.shoe.shuffle()
+        rnd = game.start_round(10)
+        for i in range(len(rnd.player)):
+            while True:
+                acts = rnd.available_actions(i)
+                if not acts:
+                    break
+                rnd.apply(basic_strategy(rnd.player[i].cards, rnd.dealer_upcard.rank,
+                                         game.rules, acts), i)
+        rnd.play_dealer()
+        rnd.settle()
+

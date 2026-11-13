@@ -100,6 +100,10 @@ class Round:
     def take_insurance(self, amount: float) -> None:
         if not self.rules.insurance:
             raise ValueError("Страховка недоступна по правилам стола")
+        if amount <= 0:
+            raise ValueError("Сумма страховки должна быть больше нуля")
+        if not self.dealer_has_ace:
+            raise ValueError("Страховка берётся, только когда у дилера открыт туз")
         self.insurance = amount
 
     def peek_blackjack(self) -> bool:

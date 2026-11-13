@@ -126,6 +126,9 @@ class Shoe:
         self.rng = rng or random.Random()
         self._cards: list[Card] = []
         self._dealt = 0
+        # Номер «поколения» шуза: растёт при каждой тасовке, в том числе
+        # аварийной посреди раунда. Наблюдатели по нему сбрасывают счёт.
+        self.generation = 0
         self.shuffle()
 
     def shuffle(self) -> None:
@@ -137,6 +140,7 @@ class Shoe:
         ]
         self.rng.shuffle(self._cards)
         self._dealt = 0
+        self.generation += 1
 
     @property
     def total(self) -> int:
@@ -159,8 +163,15 @@ class Shoe:
         return self._dealt >= self.penetration * len(self._cards)
 
     def deal(self) -> Card:
+        """Выдать карту; если шуз исчерпан — перетасовать и продолжить.
+
+        При penetration=1.0 и редком «длинном» раунде карты могут кончиться
+        прямо в раздаче. Перетасовка гарантирует, что Shoe.deal не упадёт с
+        IndexError. Номер поколения при этом меняется, и наблюдатель
+        (симулятор, GUI, тренажёр) обязан сбросить счётчик.
+        """
         if self._dealt >= len(self._cards):
-            raise IndexError("Шуз пуст — нужно перетасовать")
+            self.shuffle()
         card = self._cards[self._dealt]
         self._dealt += 1
         return card

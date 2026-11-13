@@ -47,3 +47,35 @@ def test_shoe_needs_shuffle():
     for _ in range(26):
         shoe.deal()
     assert shoe.needs_shuffle()
+
+
+def test_penetration_is_not_clamped_on_small_shoe():
+    """Порог тасования должен строго следовать penetration, даже для 1 колоды."""
+    shoe = Shoe(num_decks=1, penetration=0.75)
+    for _ in range(38):
+        shoe.deal()
+    assert not shoe.needs_shuffle()
+    shoe.deal()
+    assert shoe.needs_shuffle()
+
+
+def test_deal_reshuffles_instead_of_raising_when_empty():
+    """Конец шуза посреди раунда не должен ронять движок."""
+    shoe = Shoe(num_decks=1, penetration=1.0)
+    start_gen = shoe.generation
+    for _ in range(52):
+        shoe.deal()
+    assert shoe.remaining == 0
+    card = shoe.deal()  # аварийная перетасовка
+    assert card.rank in ("A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K")
+    assert shoe.dealt == 1
+    assert shoe.remaining == 51
+    assert shoe.generation == start_gen + 1
+
+
+def test_shuffle_bumps_generation():
+    shoe = Shoe(num_decks=1, penetration=0.5)
+    gen = shoe.generation
+    shoe.shuffle()
+    assert shoe.generation == gen + 1
+    assert shoe.dealt == 0
