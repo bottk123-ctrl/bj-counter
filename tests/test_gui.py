@@ -99,3 +99,48 @@ def test_stats_tab_records_and_draws(app):
     app.stats.refresh()
     app.stats.update_idletasks()
     assert len(app.stats.tree.get_children()) == 1
+
+
+class _ScriptedShoe:
+    """Шуз, отдающий заранее заданные карты (для детерминированных раундов)."""
+
+    def __init__(self, cards):
+        self._cards = list(cards)
+
+    def deal(self):
+        return self._cards.pop(0)
+
+
+def _scripted_round(app, ranks):
+    from blackjack.cards import Card
+    from blackjack.engine import Round
+
+    return Round(app.rules, _ScriptedShoe([Card(r, "\u2660") for r in ranks]), bet=10)
+
+
+def test_play_tab_settles_player_blackjack(app):
+    app.set_settings(app.system, Rules(num_decks=6, insurance=False))
+    # игрок A,K; дилер 9,7 (16) -> добирает 10 и перебирает
+    rnd = _scripted_round(app, ["A", "K", "9", "7", "10"])
+    original = app.play.game.start_round
+    app.play.game.start_round = lambda bet: rnd
+    try:
+        app.play.new_round()
+    finally:
+        app.play.game.start_round = original
+
+    assert app.play.rnd is rnd
+    assert app.play.rnd.hole_hidden is False
+    assert "blackjack" in app.play.result_var.get()
+    assert app.store.data["rounds_played"] == 1
+
+
+def test_play_tab_does_not_abandon_unfinished_hand(app):
+    app.set_settings(app.system, Rules(num_decks=6, insurance=False))
+    rnd = _scripted_round(app, ["5", "9", "6", "7"])
+    app.play.rnd = rnd
+
+    app.play.new_round()
+
+    assert app.play.rnd is rnd
+    assert "\u0421\u043d\u0430\u0447\u0430\u043b\u0430" in app.play.feedback_var.get()

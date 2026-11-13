@@ -46,6 +46,7 @@ class PlayFrame(ttk.Frame):
         self.app = app
         self.game = BlackjackGame(app.rules)
         self.counter = CardCounter(app.system, app.rules.num_decks)
+        self._shoe_gen = self.game.shoe.generation
         self.rnd = None
         self.seen: set[int] = set()
         self._build()
@@ -106,7 +107,17 @@ class PlayFrame(ttk.Frame):
         self.app.bind("<Key>", self._on_key, add="+")
 
     # --- обслуживание счётчика ---------------------------------------------
+    def _sync_shoe(self) -> None:
+        gen = self.game.shoe.generation
+        if getattr(self, "_shoe_gen", None) == gen:
+            return
+        # Шуз перетасовали (в том числе аварийно посреди раунда).
+        self._shoe_gen = gen
+        self.counter.reset()
+        self.game.shoe_number += 1
+
     def _see(self, card) -> None:
+        self._sync_shoe()
         if id(card) not in self.seen:
             self.seen.add(id(card))
             self.counter.observe(card)
@@ -122,10 +133,14 @@ class PlayFrame(ttk.Frame):
 
     # --- игровой цикл -------------------------------------------------------
     def new_round(self) -> None:
+        if self.rnd is not None and self._current() is not None:
+            # Не бросаем недоигранную руку: иначе карты уходят из счёта.
+            self.feedback_var.set("Сначала доиграйте текущую руку.")
+            self.feedback_label.configure(foreground=COLOR_HINT)
+            return
         if self.game.shoe.needs_shuffle():
             self.game.shoe.shuffle()
-            self.game.shoe_number += 1
-            self.counter.reset()
+            self._sync_shoe()
         self.rnd = self.game.start_round(float(self.bet_var.get()))
         self.seen = set()
         self.feedback_var.set("")
@@ -143,6 +158,10 @@ class PlayFrame(ttk.Frame):
                 self._see(self.rnd.dealer[1])
                 self._finish()
                 return
+        if self._current() is None:
+            # Блэкджек игрока: действий нет — раунд сразу рассчитывается.
+            self._finish()
+            return
         self._render()
 
     def _current(self):
@@ -268,6 +287,7 @@ class PlayFrame(ttk.Frame):
     def apply_settings(self) -> None:
         self.game = BlackjackGame(self.app.rules)
         self.counter = CardCounter(self.app.system, self.app.rules.num_decks)
+        self._shoe_gen = self.game.shoe.generation
         self.rnd = None
         self.seen = set()
         self.feedback_var.set("")
