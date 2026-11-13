@@ -43,6 +43,21 @@ class SimConfig:
     stop_at_ruin: bool = True
     sessions: int = 1              # >1 — запускать много сессий (см. run_many)
 
+    def validate(self) -> None:
+        """Проверить параметры до запуска (иначе получаются NaN и пустые отчёты)."""
+        if int(self.hands) < 1:
+            raise ValueError("Число рук должно быть >= 1")
+        if self.unit <= 0:
+            raise ValueError("Размер юнита должен быть > 0")
+        if self.bankroll < 0:
+            raise ValueError("Банкролл не может быть отрицательным")
+        if self.table_max < 0:
+            raise ValueError("Лимит стола не может быть отрицательным")
+        if not 0.0 < self.kelly_fraction <= 1.0:
+            raise ValueError("Доля Kelly должна быть в диапазоне (0, 1]")
+        if self.bet_mode not in BET_MODES:
+            raise ValueError(f"Неизвестный режим ставок: {self.bet_mode}")
+
 
 # --- вспомогательные вычисления ---------------------------------------------
 
@@ -91,6 +106,7 @@ def _choose_action(rnd, i, counter, cfg) -> str:
 # --- одна сессия -------------------------------------------------------------
 
 def run_simulation(cfg: SimConfig) -> dict:
+    cfg.validate()
     system = get_system(cfg.system_name)
     game = BlackjackGame(cfg.rules, seed=cfg.seed)
     counter = CardCounter(system, cfg.rules.num_decks)
@@ -108,6 +124,7 @@ def run_simulation(cfg: SimConfig) -> dict:
     ruined = False
     counts = {"win": 0, "lose": 0, "push": 0, "blackjack": 0, "surrender": 0, "insurance": 0}
     shoes = 0
+    shoe_gen = game.shoe.generation
     curve: list[float] = [bankroll]
     sample_every = max(1, cfg.hands // 200)
 
@@ -117,6 +134,7 @@ def run_simulation(cfg: SimConfig) -> dict:
             game.shoe_number += 1
             counter.reset()
             shoes += 1
+            shoe_gen = game.shoe.generation
 
         units = _cap_units(_bet_units(counter, cfg, bankroll), cfg)
         max_bet_units = max(max_bet_units, units)
@@ -132,7 +150,18 @@ def run_simulation(cfg: SimConfig) -> dict:
         # Видимые карты этого раунда наблюдаем по мере открытия.
         seen: set[int] = set()
 
+        def sync_shoe() -> None:
+            nonlocal shoe_gen, shoes
+            if game.shoe.generation != shoe_gen:
+                # Аварийная тасовка посреди раунда: старый счёт больше не
+                # относится к новому шузу.
+                shoe_gen = game.shoe.generation
+                counter.reset()
+                game.shoe_number += 1
+                shoes += 1
+
         def see(card) -> None:
+            sync_shoe()
             if id(card) not in seen:
                 seen.add(id(card))
                 counter.observe(card)
@@ -268,6 +297,7 @@ def run_many(cfg: SimConfig, sessions: int | None = None) -> dict:
     прочую сводку.
     """
     n = max(1, int(sessions or cfg.sessions or 1))
+    cfg.validate()
     finals: list[float] = []
     nets: list[float] = []
     edges: list[float] = []
@@ -333,7 +363,7 @@ def run_many(cfg: SimConfig, sessions: int | None = None) -> dict:
         "ci95_edge": (mean_edge - margin, mean_edge + margin),
         "aggregate_edge": aggregate_edge,
         "mean_drawdown_units": _mean(drawdowns),
-        "max_drawdown_units": _mean(drawdowns),
+        "max_drawdown_units": max(drawdowns) if drawdowns else 0.0,
         "mean_hands_played": _mean(hands_played),
         "ev_per_hand_units": (mean_net / cfg.unit / cfg.hands) if cfg.unit and cfg.hands else 0.0,
         "final_percentiles": {

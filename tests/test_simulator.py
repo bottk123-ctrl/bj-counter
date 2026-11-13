@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 from blackjack.counting import CardCounter, get_system
 from blackjack.rules import Rules
 from modes.simulator import (
@@ -116,3 +118,38 @@ def test_run_many_reports_ci_and_ruin():
     assert lo <= report["mean_edge"] <= hi
     assert len(report["final_bankrolls"]) == 8
     assert report["final_percentiles"]["p5"] <= report["final_percentiles"]["p95"]
+
+
+def test_run_many_max_drawdown_is_maximum_not_mean():
+    cfg = SimConfig(hands=500, bankroll=1000.0, seed=21, bet_mode="spread")
+    sessions = 5
+    reports = [run_simulation(replace(cfg, sessions=1, seed=cfg.seed + i)) for i in range(sessions)]
+    per_session = [r["max_drawdown_units"] for r in reports]
+
+    summary = run_many(cfg, sessions=sessions)
+    assert summary["max_drawdown_units"] == max(per_session)
+    assert summary["max_drawdown_units"] > summary["mean_drawdown_units"]
+
+
+def test_config_validation_rejects_empty_run():
+    import pytest
+
+    with pytest.raises(ValueError):
+        run_simulation(SimConfig(hands=0))
+    with pytest.raises(ValueError):
+        run_simulation(SimConfig(hands=10, unit=0.0))
+    with pytest.raises(ValueError):
+        run_simulation(SimConfig(hands=10, kelly_fraction=0.0))
+
+
+def test_full_penetration_run_never_crashes_and_reshuffles():
+    """1 колода и penetration=1.0: аварийные тасовки не ломают прогон."""
+    cfg = SimConfig(hands=5000, bankroll=1000.0, unit=10.0, seed=3,
+                    bet_mode="flat", use_deviations=False,
+                    rules=Rules(num_decks=1, penetration=1.0),
+                    stop_at_ruin=False)
+    report = run_simulation(cfg)
+    assert report["hands_played"] == 5000
+    assert report["shoes"] > 1
+    assert report["net"] == report["net"]  # не NaN
+
