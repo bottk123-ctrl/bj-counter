@@ -57,6 +57,8 @@ class SimConfig:
             raise ValueError("Доля Kelly должна быть в диапазоне (0, 1]")
         if self.bet_mode not in BET_MODES:
             raise ValueError(f"Неизвестный режим ставок: {self.bet_mode}")
+        if int(self.sessions) < 1:
+            raise ValueError("Число сессий должно быть >= 1")
 
 
 # --- вспомогательные вычисления ---------------------------------------------

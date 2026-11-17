@@ -140,6 +140,8 @@ def test_config_validation_rejects_empty_run():
         run_simulation(SimConfig(hands=10, unit=0.0))
     with pytest.raises(ValueError):
         run_simulation(SimConfig(hands=10, kelly_fraction=0.0))
+    with pytest.raises(ValueError):
+        run_many(SimConfig(hands=10, sessions=0))
 
 
 def test_full_penetration_run_never_crashes_and_reshuffles():
