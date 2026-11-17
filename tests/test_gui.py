@@ -120,7 +120,8 @@ def _scripted_round(app, ranks):
 
 def test_play_tab_settles_player_blackjack(app):
     app.set_settings(app.system, Rules(num_decks=6, insurance=False))
-    # игрок A,K; дилер 9,7 (16) -> добирает 10 и перебирает
+    # игрок A,K (блэкджек); дилер 9,7 — карту 10 дилер уже не добирает,
+    # выплата 3:2 идёт сразу против натурального блэкджека игрока
     rnd = _scripted_round(app, ["A", "K", "9", "7", "10"])
     original = app.play.game.start_round
     app.play.game.start_round = lambda bet: rnd
