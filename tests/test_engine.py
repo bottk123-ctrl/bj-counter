@@ -38,6 +38,20 @@ def test_player_blackjack_payout():
     assert results[0].net == 15.0
 
 
+def test_dealer_does_not_draw_against_player_blackjack():
+    """У игрока натуральный блэкджек — дилер не берёт лишних карт."""
+    # Карт ровно на раздачу + скрытая карта дилера; если бы дилер добрал,
+    # FakeShoe бросил бы IndexError.
+    shoe = FakeShoe([_c("A"), _c("K"), _c("5"), _c("9")])
+    rnd = Round(Rules(), shoe, bet=10)
+    assert rnd.player[0].blackjack
+    rnd.play_dealer()
+    assert len(rnd.dealer) == 2
+    results = rnd.settle()
+    assert results[0].result == "blackjack"
+    assert results[0].net == 15.0
+
+
 def test_both_blackjack_push():
     shoe = FakeShoe([_c("A"), _c("K"), _c("A"), _c("Q")])
     rnd = Round(Rules(), shoe, bet=10)

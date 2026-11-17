@@ -210,8 +210,16 @@ class Round:
     def play_dealer(self) -> None:
         """Открыть карту дилера и добрать по правилам."""
         self.hole_hidden = False
-        if not any(not h.is_bust and not h.surrendered for h in self.player):
-            return  # все руки игрока проиграны — дилер не добирает
+        # Дилер добирает, только если есть «живая» рука, которую ещё нужно
+        # сравнить: не перебор, не сдана и не натуральный блэкджек. Иначе
+        # (все руки проиграны или у игрока чистый блэкджек) он не берёт лишних
+        # карт — это не жжёт колоду и не искажает счёт.
+        needs_play = any(
+            not h.is_bust and not h.surrendered and not h.blackjack
+            for h in self.player
+        )
+        if not needs_play:
+            return
         while self._dealer_should_hit():
             self.dealer.append(self.shoe.deal())
 
