@@ -40,11 +40,6 @@ class CountingSystem:
         return self.irc(num_decks)
 
 
-def _tags(**kwargs) -> Dict[str, float]:
-    """Хелпер: _tags(a=..., b=...) где ключи — ранги в виде строк."""
-    return {str(k): float(v) for k, v in kwargs.items()}
-
-
 # Значения рангов задаются компактно.
 
 HI_LO = CountingSystem(
@@ -132,6 +127,8 @@ WONG_HALVES = CountingSystem(
 )
 
 # Red Seven: значение семёрки зависит от цвета (красная = +1, чёрная = 0).
+
+
 def _red_seven_value(card: Card) -> float:
     if card.rank == "7":
         return 1 if card.is_red else 0
@@ -171,7 +168,7 @@ def get_system(name: str) -> CountingSystem:
 
 
 def make_custom_system(name: str, values: Dict[str, float], balanced: bool = True,
-                       bet_ramp=None) -> CountingSystem:
+                       bet_ramp: List[Tuple[float, int]] | None = None) -> CountingSystem:
     """Создать пользовательскую систему подсчёта."""
     system = CountingSystem(
         name=name,
