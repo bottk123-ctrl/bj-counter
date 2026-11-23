@@ -96,7 +96,7 @@ def is_pair(cards) -> bool:
     return len(cards) == 2 and cards[0].rank == cards[1].rank
 
 
-def pair_rank(cards):
+def pair_rank(cards) -> str | None:
     """Ранг пары или None, если это не пара."""
     if is_pair(cards):
         return cards[0].rank

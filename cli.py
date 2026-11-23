@@ -43,7 +43,7 @@ True count = running count / колод осталось (для balanced-сис
 """
 
 
-def _ask_int(prompt: str, default: int):
+def _ask_int(prompt: str, default: int) -> int:
     raw = input(prompt).strip()
     if not raw:
         return default
@@ -54,7 +54,7 @@ def _ask_int(prompt: str, default: int):
         return default
 
 
-def _ask_float(prompt: str, default: float):
+def _ask_float(prompt: str, default: float) -> float:
     raw = input(prompt).strip()
     if not raw:
         return default
